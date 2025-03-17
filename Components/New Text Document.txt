@@ -1,0 +1,59 @@
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import Stripe from "stripe";
+
+export default function DatingApp() {
+  const [profiles, setProfiles] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    // Fetch user profiles from backend
+    fetch("/api/profiles")
+      .then((res) => res.json())
+      .then((data) => setProfiles(data));
+  }, []);
+
+  const handleSwipe = (direction) => {
+    if (direction === "right") {
+      console.log("Matched with", profiles[currentIndex].name);
+    }
+    setCurrentIndex((prev) => prev + 1);
+  };
+
+  const handleSubscribe = async () => {
+    const res = await fetch("/api/subscribe", {
+      method: "POST",
+    });
+    const { sessionUrl } = await res.json();
+    window.location.href = sessionUrl;
+  };
+
+  return (
+    <div className="flex flex-col items-center p-4">
+      {profiles[currentIndex] ? (
+        <motion.div
+          className="w-80 h-96 bg-white shadow-lg rounded-2xl flex items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <Card>
+            <CardContent>
+              <h2 className="text-xl font-bold">{profiles[currentIndex].name}</h2>
+              <p>{profiles[currentIndex].bio}</p>
+              <Button onClick={() => handleSwipe("right")} className="m-2">❤️ Like</Button>
+              <Button onClick={() => handleSwipe("left")} className="m-2">❌ Pass</Button>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ) : (
+        <p>No more profiles</p>
+      )}
+      <Button onClick={handleSubscribe} className="mt-4 bg-blue-500 text-white p-2 rounded-lg">
+        Upgrade to Premium
+      </Button>
+    </div>
+  );
+}
